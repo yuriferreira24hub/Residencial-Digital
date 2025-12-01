@@ -1,0 +1,16 @@
+residencial-digital-backend/
+residencial-digital-frontend/
+node_modules/
+.env
+.DS_Store
+dist/
+build/
+coverage/
+.vscode/
+.idea/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
