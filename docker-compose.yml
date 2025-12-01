@@ -1,0 +1,76 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: residencial-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: segurodb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: residencial-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+  backend:
+    build: ./residencial-digital-backend
+    container_name: residencial-backend
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      PORT: 3000
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/segurodb"
+    ports:
+      - "3000:3000"
+
+  backend-init:
+    image: curlimages/curl:latest
+    depends_on:
+      - backend
+    entrypoint: >
+      sh -c "
+        echo 'Aguardando backend iniciar...';
+        sleep 10;
+        echo 'Inserindo usuário admin padrão...';
+        curl --location 'http://backend:3000/v1/users' \
+          --header 'Content-Type: application/json' \
+          --data-raw '{
+            \"name\": \"admin\",
+            \"email\": \"admin@example.com\",
+            \"password\": \"admin123\",
+            \"role\": \"admin\"
+          }' || echo 'Falha ao criar usuário (pode já existir)';
+        echo '✔ Seed finalizado';
+      "
+
+  frontend:
+    build: ./residencial-digital-frontend
+    container_name: residencial-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:3000"
+    ports:
+      - "3001:3001"
+
+volumes:
+  postgres_data:
+  pgadmin_data:
