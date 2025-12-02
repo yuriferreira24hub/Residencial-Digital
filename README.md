@@ -36,6 +36,7 @@ npm install
 
 #### 2.3. Configure as variáveis de ambiente
 
+
 Crie um arquivo `.env` na raiz da pasta `residencial-digital-backend`:
 
 ```bash
@@ -152,7 +153,7 @@ Content-Type: application/json
 
 {
   "name": "admin",
-  "email": "admin@test.com",
+  "email": "admin@example.com",
   "password": "admin123",
   "role": "admin"
 }
