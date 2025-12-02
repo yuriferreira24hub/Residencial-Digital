@@ -37,6 +37,9 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/segurodb"
+      JWT_SECRET: "sua_chave_secreta_jwt_aqui_troque_por_algo_seguro"
+      NODE_ENV: "development"
+      FRONTEND_URL: "http://localhost:3001"
     ports:
       - "3000:3000"
 
