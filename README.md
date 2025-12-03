@@ -20,143 +20,46 @@ git clone https://github.com/yuriferreira24hub/Residencial-Digital.git
 cd Residencial-Digital
 ```
 
-### 2. Configuração do Backend
+### 2. Subindo o Projeto com Docker
 
-#### 2.1. Navegue até a pasta do backend
+⚠️ **Nota**: As variáveis de ambiente já estão configuradas no `docker-compose.yml`. Você não precisa criar arquivos `.env` manualmente para rodar com Docker.
 
-```bash
-cd residencial-digital-backend
-```
-
-#### 2.2. Instale as dependências
-
-```bash
-npm install
-```
-
-#### 2.3. Configure as variáveis de ambiente
-
-
-Crie um arquivo `.env` na raiz da pasta `residencial-digital-backend`:
-
-```bash
-# Crie o arquivo .env
-touch .env  # Linux/Mac
-# ou
-New-Item .env  # Windows PowerShell
-```
-
-Adicione as seguintes variáveis ao arquivo `.env`:
-
-```env
-# Database
-DATABASE_URL="postgresql://postgres:postgres@postgres:5432/segurodb"
-
-# JWT Secret (troque por uma chave segura)
-JWT_SECRET="sua_chave_secreta_muito_segura_aqui"
-
-# Node Environment
-NODE_ENV="development"
-
-# API Allianz (opcional - para integração com seguros)
-ALLIANZ_API_KEY="sua_api_key_allianz"
-ALLIANZ_API_URL="https://api.allianz.com"
-```
-
-⚠️ **Importante**: Nunca compartilhe suas chaves secretas! O arquivo `.env` já está no `.gitignore`.
-
-### 3. Configuração do Frontend
-
-#### 3.1. Navegue até a pasta do frontend
-
-```bash
-cd ../residencial-digital-frontend
-```
-
-#### 3.2. Instale as dependências
-
-```bash
-npm install
-```
-
-#### 3.3. Configure as variáveis de ambiente
-
-Crie um arquivo `.env.local` na raiz da pasta `residencial-digital-frontend`:
-
-```bash
-# Crie o arquivo .env.local
-touch .env.local  # Linux/Mac
-# ou
-New-Item .env.local  # Windows PowerShell
-```
-
-Adicione as seguintes variáveis ao arquivo `.env.local`:
-
-```env
-# URL da API Backend
-NEXT_PUBLIC_API_URL=http://localhost:3000/v1
-
-# Ambiente
-NODE_ENV=development
-```
-
-### 4. Subindo o Projeto com Docker
-
-#### 4.1. Volte para a raiz do projeto
-
-```bash
-cd ..
-```
-
-#### 4.2. Inicie os containers
+#### 2.1. Inicie os containers
 
 ```bash
 docker-compose up -d
 ```
 
 Este comando irá:
-- Criar e iniciar o banco de dados PostgreSQL
+- Criar e iniciar o banco de dados PostgreSQL na porta 5432
+- Criar e iniciar o PgAdmin na porta 8080
 - Criar e iniciar o backend (Node.js/Express) na porta 3000
+- Executar as migrations automaticamente
+- Criar automaticamente um usuário admin
 - Criar e iniciar o frontend (Next.js) na porta 3001
 
-#### 4.3. Verifique se os containers estão rodando
+#### 2.2. Verifique se os containers estão rodando
 
 ```bash
 docker ps
 ```
 
-Você deve ver 3 containers ativos:
-- `residencial-postgres`
-- `residencial-backend`
-- `residencial-frontend`
+Você deve ver 4 containers ativos:
+- `residencial-db` - PostgreSQL
+- `residencial-pgadmin` - PgAdmin (interface web do banco)
+- `residencial-backend` - API Backend
+- `residencial-frontend` - Interface Frontend
 
-### 5. Configuração do Banco de Dados
+#### 2.3. Aguarde a inicialização
 
-#### 5.1. Execute as migrations
-
-```bash
-cd residencial-digital-backend
-docker exec -it residencial-backend npx prisma migrate deploy
-```
-
-#### 5.2. Crie um usuário administrador
+O processo completo leva cerca de 30-60 segundos. Você pode acompanhar os logs:
 
 ```bash
-docker exec -it residencial-backend npm run create-admin
-```
+# Ver logs do backend
+docker logs -f residencial-backend
 
-Ou use o endpoint da API para criar manualmente:
-
-```bash
-POST http://localhost:3000/v1/users
-Content-Type: application/json
-
-{
-  "name": "admin",
-  "email": "admin@example.com",
-  "password": "admin123",
-  "role": "admin"
-}
+# Ver logs do frontend
+docker logs -f residencial-frontend
 ```
 
 ## 🌐 Acessando a Aplicação
@@ -165,11 +68,24 @@ Após seguir todos os passos:
 
 - **Frontend**: http://localhost:3001
 - **Backend API**: http://localhost:3000/v1
+- **PgAdmin** (Gerenciador de Banco): http://localhost:8080
 
-### Credenciais de Acesso (após criar o admin)
+### Credenciais de Acesso
 
-- **Email**: admin@test.com
+#### Aplicação (Frontend/Backend)
+- **Email**: admin@example.com
 - **Senha**: admin123
+
+#### PgAdmin (Gerenciador de Banco)
+- **Email**: admin@admin.com
+- **Senha**: admin
+
+Para conectar ao banco no PgAdmin:
+- **Host**: postgres (ou host.docker.internal se estiver fora do Docker)
+- **Port**: 5432
+- **Database**: segurodb
+- **Username**: postgres
+- **Password**: postgres
 
 ## 📁 Estrutura do Projeto
 
@@ -215,17 +131,31 @@ docker-compose up -d
 # Parar os containers
 docker-compose down
 
-# Ver logs do backend
+# Ver logs em tempo real
 docker logs -f residencial-backend
-
-# Ver logs do frontend
 docker logs -f residencial-frontend
+
+# Ver últimas 50 linhas dos logs
+docker logs --tail 50 residencial-backend
 
 # Reiniciar um container específico
 docker restart residencial-backend
 
+# Reconstruir e reiniciar containers
+docker-compose up -d --build
+
+# Reconstruir sem cache (resolve problemas de dependências)
+docker-compose build --no-cache
+docker-compose up -d
+
 # Acessar o terminal de um container
 docker exec -it residencial-backend sh
+
+# Listar todos os containers (incluindo parados)
+docker ps -a
+
+# Remover containers, volumes e redes
+docker-compose down -v
 ```
 
 ### Backend
@@ -234,16 +164,27 @@ docker exec -it residencial-backend sh
 # Entrar na pasta do backend
 cd residencial-digital-backend
 
-# Executar migrations
-npx prisma migrate dev
+# Rodar migrations dentro do container
+docker exec -it residencial-backend npx prisma migrate dev
 
 # Gerar Prisma Client
-npx prisma generate
+docker exec -it residencial-backend npx prisma generate
 
 # Ver banco de dados (Prisma Studio)
-npx prisma studio
+docker exec -it residencial-backend npx prisma studio
 
-# Rodar em desenvolvimento (fora do Docker)
+# Criar usuário admin manualmente
+curl -X POST http://localhost:3000/v1/users \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Administrador",
+    "email": "admin@example.com",
+    "password": "admin123",
+    "role": "admin"
+  }'
+
+# Rodar em desenvolvimento (FORA do Docker - requer configuração manual)
+npm install
 npm run dev
 ```
 
@@ -253,7 +194,11 @@ npm run dev
 # Entrar na pasta do frontend
 cd residencial-digital-frontend
 
-# Rodar em desenvolvimento (fora do Docker)
+# Ver logs em tempo real
+docker logs -f residencial-frontend
+
+# Rodar em desenvolvimento (FORA do Docker - requer configuração manual)
+npm install
 npm run dev
 
 # Build para produção
@@ -261,6 +206,22 @@ npm run build
 
 # Rodar em produção
 npm start
+```
+
+### Banco de Dados
+
+```bash
+# Acessar PostgreSQL via linha de comando
+docker exec -it residencial-db psql -U postgres -d segurodb
+
+# Fazer backup do banco
+docker exec -t residencial-db pg_dump -U postgres segurodb > backup.sql
+
+# Restaurar backup
+docker exec -i residencial-db psql -U postgres segurodb < backup.sql
+
+# Limpar dados do banco (cuidado!)
+docker exec -it residencial-db psql -U postgres -d segurodb -c "TRUNCATE TABLE \"User\", \"Property\", \"Quote\", \"Policy\" CASCADE;"
 ```
 
 ## 🔧 Troubleshooting
@@ -292,7 +253,7 @@ docker-compose restart
 
 ### Problema: Porta já em uso
 
-Se as portas 3000 ou 3001 já estiverem em uso, edite o `docker-compose.yml`:
+Se as portas 3000, 3001, 5432 ou 8080 já estiverem em uso, edite o `docker-compose.yml`:
 
 ```yaml
 # Exemplo: mudar porta do backend de 3000 para 3002
@@ -300,17 +261,25 @@ ports:
   - "3002:3000"
 ```
 
-### Problema: Dependências desatualizadas
+### Problema: Erro com bcrypt (invalid ELF header)
+
+Esse erro ocorre quando o `node_modules` foi instalado no Windows e está sendo usado no Docker (Linux). Solução:
 
 ```bash
-# Backend
-cd residencial-digital-backend
-npm install
-
-# Frontend
-cd residencial-digital-frontend
-npm install
+# Reconstruir as imagens sem cache
+docker-compose build --no-cache
+docker-compose up -d
 ```
+
+O arquivo `.dockerignore` já está configurado para evitar esse problema.
+
+### Problema: Erro 401 (Unauthorized) no frontend
+
+Isso é **normal** quando você não está autenticado. O `AuthGuard` verifica automaticamente e redireciona para a página de login. Certifique-se de:
+
+1. O backend está rodando (`docker logs residencial-backend`)
+2. As variáveis de ambiente estão corretas no `docker-compose.yml`
+3. A variável `FRONTEND_URL` está definida como `http://localhost:3001`
 
 ## 📝 Endpoints Principais da API
 
@@ -345,20 +314,38 @@ npm install
 - `GET /v1/policies` - Listar apólices
 - `GET /v1/policies/:id` - Buscar apólice
 
-## 🤝 Contribuindo
+## 🔒 Segurança
 
-1. Faça um Fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/MinhaFeature`)
-3. Commit suas mudanças (`git commit -m 'Adiciona MinhaFeature'`)
-4. Push para a branch (`git push origin feature/MinhaFeature`)
-5. Abra um Pull Request
+### Autenticação
 
-## 📄 Licença
+O sistema utiliza autenticação baseada em **cookies HttpOnly**, que oferece maior segurança:
 
-Este projeto está sob a licença MIT.
+- ✅ Cookies não acessíveis via JavaScript (proteção contra XSS)
+- ✅ Cookies com flag `SameSite` (proteção contra CSRF)
+- ✅ Cookies com flag `Secure` em produção (apenas HTTPS)
+- ✅ JWT armazenado apenas no servidor via cookies
+
+### Variáveis de Ambiente Sensíveis
+
+⚠️ **IMPORTANTE**: Antes de colocar em produção, altere as seguintes variáveis no `docker-compose.yml`:
+
+```yaml
+JWT_SECRET: "gere_uma_chave_segura_aleatoria_aqui"
+POSTGRES_PASSWORD: "senha_forte_do_banco"
+PGADMIN_DEFAULT_PASSWORD: "senha_forte_pgadmin"
+```
+
+Para gerar uma chave JWT segura:
+```bash
+# Node.js
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# OpenSSL
+openssl rand -hex 32
+```
 
 ## 👨‍💻 Autor
 
 **Yuri Demétrio Ferreira**
-- GitHub: [@yuriferreira24hub](https://github.com/yuriferreira24hub)
 
+- GitHub: [@yuriferreira24hub](https://github.com/yuriferreira24hub)
