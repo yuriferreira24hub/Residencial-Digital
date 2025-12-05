@@ -37,9 +37,23 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/segurodb"
-      JWT_SECRET: "sua_chave_secreta_jwt_aqui_troque_por_algo_seguro"
+      JWT_SECRET: "admin123"
       NODE_ENV: "development"
       FRONTEND_URL: "http://localhost:3001"
+      ALLIANZ_API_BASE_URL: "https://eu-uat-brazil.apis.allianz.com/residencia/v2"
+      ALLIANZ_TOKEN_ENDPOINT: "https://eu-uat-brazil.apis.allianz.com/oauth/v1/accesstoken?grant_type=cert"
+      ALLIANZ_USERNAME: "aPqsjF0hhAj7b6xYZIE4PA6jeznl4EPT"
+      ALLIANZ_PASSWORD: "OAfWfNSnj5XhcdZo"
+      ALLIANZ_API_MEDIADOR: 4033334
+      ALLIANZ_API_PARCEIRO: "BP002621"
+      ALLIANZ_API_USUARIO: "BA262880"
+      ALLIANZ_API_COOPERATIVE_CODE: 3069
+      ALLIANZ_API_BANK_CODE: ""
+      ALLIANZ_API_BROKER_CODE: ""
+      ALLIANZ_API_CENTER_ID: ""
+      ALLIANZ_API_SERVICE_POINT_CODE: ""
+      ALLIANZ_API_FUNDRAISER_REG: ""
+      ALLIANZ_MOCK_MODE: "false"
     ports:
       - "3000:3000"
 
